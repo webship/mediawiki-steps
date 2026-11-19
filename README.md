@@ -282,8 +282,10 @@ npm install --save-dev @webship-js/mediawiki-steps
     checks of the account creation form (`list=users`, `validatepassword`);
   - the filters app of the watchlist and recent changes
     (`body.mw-rcfilters-ui-initialized`);
-  - the job queue (`siteinfo` statistics) after a test page is made: the
-    category counts the category tree reads are written by jobs.
+  - the category counts after a test page is made: a page is listed in its
+    category at once, but the counts the category tree reads are written by a
+    job of the wiki, so the step waits until the counts (`categoryinfo`) match
+    the members (`categorymembers`).
 - **The visual editor's welcome dialog** opens over the first editor each
   account opens, and makes the page behind it inert: the editing steps close it
   with "Start editing".

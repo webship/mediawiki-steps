@@ -41,6 +41,8 @@ const {
   apiUpload,
   apiUnblock,
   waitForJobs,
+  waitForCategoryCounts,
+  categoriesOf,
   resolveUser,
 } = require('./mediawiki-helpers');
 
@@ -92,8 +94,11 @@ async function writeTestPage(world, title, text, summary) {
     });
   }
   cleanUpAfter(world, title);
+  const before = info.exists && info.revision ? categoriesOf(info.revision.text) : [];
   await apiEdit(world, title, text, `${summary || 'Test page of a scenario'} ${MARKER}`);
   await waitForJobs(world);
+  // The categories the page is put in (and taken out of) get their counts once a job of the wiki ran.
+  await waitForCategoryCounts(world, before.concat(categoriesOf(text)));
 }
 
 /**
@@ -547,7 +552,17 @@ When(/^(I |we )*(expand|collapse) the category "([^"]*)" in the category tree$/,
     const names = await this.page.locator('.CategoryTreeItem > bdi a, .CategoryTreeItem a:not(.CategoryTreeToggle)').allInnerTexts().catch(() => []);
     throw friendly({ message: `The category tree has no category "${name}". It shows: ${listed(names)}.`, hint: 'The category tree is on the page of a category with subcategories (the CategoryTree extension).' });
   }
-  const toggle = item.locator('.CategoryTreeToggle');
+  let toggle = item.locator('.CategoryTreeToggle');
+  if (!(await toggle.count())) {
+    // The page may have been drawn before the wiki's job wrote the category's counts: wait for them, then
+    // draw it again.
+    const behind = await waitForCategoryCounts(this, [name]);
+    if (!behind.length) {
+      await openPage(this, await config(this, 'wgPageName'));
+      await pageModulesReady(this).catch(() => []);
+      toggle = treeItem(this, name).locator('.CategoryTreeToggle');
+    }
+  }
   if (!(await toggle.count())) throw friendly({ message: `The category "${name}" has no toggle in the tree: the wiki counts no subcategory in it.`, hint: 'A category without subcategories shows a plain bullet. The counts are written by the wiki\'s job queue: the test-data steps wait for it.' });
   const open = (await toggle.getAttribute('aria-expanded')) === 'true';
   if ((action === 'expand') === open) return;

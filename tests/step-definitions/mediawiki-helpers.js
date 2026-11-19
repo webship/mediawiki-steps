@@ -668,6 +668,42 @@ async function waitForJobs(world, timeout) {
   }
 }
 
+/**
+ * Wait until the counts of categories (API prop=categoryinfo: its size and its
+ * subcategories) match their members (list=categorymembers). A page saved in a
+ * category is listed at once, but the counts are written by a job of the wiki,
+ * and the category tree offers a toggle only from them. (The job queue's size in
+ * siteinfo is no signal for this: it is cached, and one waiting job reads 0.)
+ * Returns the categories whose counts still differ when the budget ran out.
+ */
+async function waitForCategoryCounts(world, categories, timeout) {
+  const names = [...new Set((categories || []).map((c) => titleText(String(c).replace(/^Category:/i, ''))).filter(Boolean))];
+  if (!names.length) return [];
+  const api = await adminApi(world);
+  const deadline = Date.now() + (timeout || budget(world) * 2);
+  let behind = names;
+  for (;;) {
+    const still = [];
+    for (const name of behind) {
+      const info = await api.call({ action: 'query', titles: `Category:${name}`, prop: 'categoryinfo' });
+      const page = info.query && info.query.pages && info.query.pages[0];
+      const counts = (page && page.categoryinfo) || { size: 0, subcats: 0 };
+      const members = await api.call({ action: 'query', list: 'categorymembers', cmtitle: `Category:${name}`, cmprop: 'type', cmlimit: 'max' });
+      const list = (members.query && members.query.categorymembers) || [];
+      const subcats = list.filter((m) => m.type === 'subcat').length;
+      if (counts.size !== list.length || counts.subcats !== subcats) still.push(name);
+    }
+    behind = still;
+    if (!behind.length || Date.now() > deadline) return behind;
+    await new Promise((r) => setTimeout(r, 300));
+  }
+}
+
+/** The categories wikitext puts a page in ([[Category:Name]] links). */
+function categoriesOf(wikitext) {
+  return [...String(wikitext || '').matchAll(/\[\[\s*Category\s*:\s*([^\]|#]+)/gi)].map((m) => m[1].trim());
+}
+
 module.exports = {
   budget,
   settleBudget,
@@ -727,4 +763,6 @@ module.exports = {
   apiBlocks,
   apiUnblock,
   waitForJobs,
+  waitForCategoryCounts,
+  categoriesOf,
 };
