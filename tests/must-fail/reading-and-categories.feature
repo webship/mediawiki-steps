@@ -55,3 +55,12 @@ Feature: Assertions that must fail: reading a page, categories and talk pages
     And I am an anonymous user
     When I open the page "Talk:Reading test page"
     Then the talk page should have the topic "Never added"
+
+  Scenario: A red link to a page made after the page was drawn
+    Fails with: The link to "Linked later page" is red, although the page exists
+    Given the page "Linked later page" does not exist
+    And the page "Linking test page" has the text "A link: [[Linked later page]]."
+    And I am an anonymous user
+    When I open the page "Linking test page"
+    And the page "Linked later page" has the text "Made after the link was drawn."
+    Then the page should link to the page "Linked later page"

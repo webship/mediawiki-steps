@@ -392,7 +392,8 @@ async function contentLinks(world) {
 /**
  * Assert that the page links to another page of the wiki that exists (a blue
  * link), or to a page that does not exist yet (a red link), by the title the
- * link leads to.
+ * link leads to. A red link to a page that exists says so: the page on screen
+ * was drawn before that page was made.
  *
  * Example #1: Then the page should link to the page "Editing help"
  * Example #2: Then the page should link to the missing page "Page not written yet"
@@ -404,6 +405,16 @@ Then(/^the page should( not)* link to the (page|missing page) "([^"]*)"$/, async
   const links = await contentLinks(this);
   const want = titleText(title);
   const has = links.some((l) => l.title && titleText(l.title) === want && !l.external && l.missing === (kind === 'missing page'));
+  if (!notCase && !has && kind === 'page' && links.some((l) => l.title && titleText(l.title) === want && l.missing)) {
+    // A red link to a page that exists: the page on screen was drawn before that page was made.
+    const info = await pageInfo(this, want).catch(() => null);
+    if (info && info.exists) {
+      throw friendly({
+        message: `The link to "${want}" is red, although the page exists: the wiki drew this page before "${want}" was made, and draws it again only when a job of the wiki runs (or the page is opened again later).`,
+        hint: `Make "${want}" first, then the page that links to it ("Given the page "${want}" has the text …" before the page with the link).`,
+      });
+    }
+  }
   if (!!notCase === has) {
     const internal = links.filter((l) => l.title && !l.external).map((l) => `${l.title}${l.missing ? ' (missing)' : ''}`);
     throw friendly({ message: notCase ? `The page links to the ${kind} "${want}".` : `The page has no link to the ${kind} "${want}". Its links to pages: ${listed(internal)}.`, hint: 'A link to a page that does not exist yet is a red link (class "new"); the title is the page the link leads to, not its text.' });
