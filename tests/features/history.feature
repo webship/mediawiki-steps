@@ -21,10 +21,10 @@ Feature: The history of a page
     Given I am a logged in user with the "editor" user
     When I open the history of the page "History test page"
     And I undo the revision "Second version"
-    And I save the page
+    And I save the page with the summary "Back to the first version"
     Then the edit should be saved
     And the page text should contain "First version of the page."
     And the page text should not contain "Second version of the page."
     When I open the history of the page "History test page"
     Then the history should list 3 revisions
-    And the history should list the revision "Undid revision" by "editor"
+    And the history should list the revision "Back to the first version" by "editor"

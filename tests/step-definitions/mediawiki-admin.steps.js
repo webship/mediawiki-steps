@@ -183,7 +183,10 @@ When(/^(I |we )*block the account "([^"]*)" for "([^"]*)" with the reason "([^"]
   if (!this.__wikiCleanup) this.__wikiCleanup = { pages: new Set(), blocks: new Set() };
   this.__wikiCleanup.blocks.add(name);
   await chooseOption(this, page.locator('[id^="mw-input-wpExpiry"] [role="combobox"]').first(), expiry);
-  await page.getByRole('checkbox', { name: /^Block the last IP address used by this account/ }).uncheck();
+  // "Block the last IP address used by this account, …" (the long-term-support release: "Automatically block
+  // the last IP address used by this user, …"), the box wpAutoBlock of the form.
+  const autoblock = page.getByRole('checkbox', { name: /last IP address used by this (account|user)/i }).or(page.locator('input[name="wpAutoBlock"]')).first();
+  if (await autoblock.count()) await autoblock.uncheck();
   await page.locator('input[name="wpReason-other"]').fill(reason);
   await afterNavigation(this, () => submit.first().click());
   const text = clean(await page.locator('#mw-content-text').innerText().catch(() => ''));
