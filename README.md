@@ -47,7 +47,7 @@ steps on a second bundled skin; see
 ## From nothing to a green run
 
 What the machine needs: Docker, [DDEV](https://ddev.com), git, python3, and
-Node.js 20 or later with npm. PHP, the database, the job runner and the release
+Node.js 24 or later with npm. PHP, the database, the job runner and the release
 download run in DDEV's containers.
 
 **1. The wiki.** The pack's own build script (the one CI runs) makes the wiki in
@@ -247,7 +247,7 @@ in a few places, named in the hints).
 
 ## Requirements
 
-- Node.js 20 or later
+- Node.js 24 or later
 - A webship-js 2.0 test project (webship-js 2.0.16 or later)
 - A wiki on MediaWiki 1.43 or later, with the VisualEditor and CategoryTree
   extensions for their steps, uploads on for the upload steps, and accounts on
