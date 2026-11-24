@@ -1,6 +1,6 @@
 {
   "name": "@webship-js/mediawiki-steps",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Cucumber step definitions for MediaWiki, a plugin for webship-js (Playwright and Cucumber): reading a page with its contents list, sections, links, references and categories; the search box with its suggestions and the results page; the source editor (summary, minor edit, preview, changes, edit conflicts) and the visual editor; the history (compare, undo), talk pages, the category tree, the watchlist, recent changes and preferences; file uploads; protecting, deleting, restoring and blocking; login, logout and account creation refusals.",
   "main": "tests/step-definitions/mediawiki-session.steps.js",
   "files": [
